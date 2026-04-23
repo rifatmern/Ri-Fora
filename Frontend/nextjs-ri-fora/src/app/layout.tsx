@@ -3,7 +3,6 @@ import { Lato } from "next/font/google";
 import "./globals.css";
 import Navbar from "../../components/Navbar";
 import BackTop from "../../components/BackTop"
-import Banner from "../../components/Banner"
 const lato = Lato({
   subsets: ["latin"],
   weight: ["300", "400", "700", "900"],
@@ -27,8 +26,6 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col font-sans">
         <Navbar />
-        
-        <Banner/>
         {children}
         <BackTop/>
       </body>

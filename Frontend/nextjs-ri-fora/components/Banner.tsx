@@ -1,8 +1,9 @@
 "use client";
+
 import React from "react";
 import Link from "next/link";
 
-const Banner = () => {
+const Banner: React.FC = () => {
   return (
     <section className="w-full min-h-screen bg-[#f8f8f8] flex items-center justify-center px-4">
       
