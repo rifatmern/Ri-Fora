@@ -5,10 +5,10 @@ import Link from "next/link";
 
 const Banner: React.FC = () => {
   return (
-    <section className="w-full min-h-screen bg-[#f8f8f8] flex items-center justify-center px-4">
+    <section className="w-full bg-[#f8f8f8] flex items-center justify-center px-4">
       
       {/* CENTER CONTENT */}
-      <div className="text-center space-y-6 max-w-2xl">
+      <div className="text-center space-y-6 py-110 max-w-2xl">
 
         <p className="text-xs sm:text-sm tracking-[0.3em] text-gray-500 uppercase">
           New Collection 2026

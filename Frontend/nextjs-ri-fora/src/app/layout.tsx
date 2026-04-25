@@ -1,8 +1,13 @@
 import type { Metadata } from "next";
 import { Lato } from "next/font/google";
 import "./globals.css";
+
 import Navbar from "../../components/Navbar";
-import BackTop from "../../components/BackTop"
+import BackTop from "../../components/BackTop";
+import Footer from "../../components/Footer";
+
+import Providers from "./providers"; // 👈 NEW
+
 const lato = Lato({
   subsets: ["latin"],
   weight: ["300", "400", "700", "900"],
@@ -20,14 +25,20 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html
-      lang="en"
-      className={`${lato.variable} h-full antialiased`}
-    >
+    <html lang="en" className={`${lato.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col font-sans">
-        <Navbar />
-        {children}
-        <BackTop/>
+
+        <Providers>
+
+          <Navbar />
+
+          {children}
+
+          <BackTop />
+          <Footer />
+
+        </Providers>
+
       </body>
     </html>
   );
