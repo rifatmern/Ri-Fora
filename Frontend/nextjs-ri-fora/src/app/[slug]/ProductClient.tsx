@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { PortableText } from "next-sanity";
 import { createImageUrlBuilder } from "@sanity/image-url";
@@ -51,8 +51,6 @@ const ratingBreakdown = [
   { star: 1, count: 1 },
 ];
 
-const sizes = ["S", "M", "L", "XL"];
-
 export default function ProductClient({ post }: { post: any }) {
   if (!post) {
     return (
@@ -62,13 +60,54 @@ export default function ProductClient({ post }: { post: any }) {
     );
   }
 
-  const imageUrl = post.image ? urlFor(post.image) : null;
-  const [mainImage, setMainImage] = useState(imageUrl);
-  const [selectedSize, setSelectedSize] = useState("M");
+  // 1. DYNAMIC IMAGES: Fallback from new 'images' array to old 'image' field safely
+  const imageGallery = post.images && post.images.length > 0 
+    ? post.images.map((img: any) => urlFor(img)) 
+    : post.image ? [urlFor(post.image)] : [];
+
+  const [mainImage, setMainImage] = useState(imageGallery[0] || null);
+  
+  // Sync main image if the post content changes asynchronously
+  useEffect(() => {
+    if (imageGallery.length > 0) setMainImage(imageGallery[0]);
+  }, [post]);
+
+  // 2. DYNAMIC PRICING & CALCULATION
+  const price = post.price || 0;
+  const compareAtPrice = post.compareAtPrice || 0;
+  const discountPercentage = compareAtPrice > price 
+    ? Math.round(((compareAtPrice - price) / compareAtPrice) * 100) 
+    : 0;
+
+  // 3. DYNAMIC SIZES
+  const availableSizes = post.availableSizes || ["S", "M", "L", "XL"];
+  const [selectedSize, setSelectedSize] = useState(availableSizes[0] || "");
+
   const [wishlist, setWishlist] = useState(false);
   const [descOpen, setDescOpen] = useState(true);
   const [shippingOpen, setShippingOpen] = useState(false);
   const [showReviews, setShowReviews] = useState(false);
+
+  // 4. REAL-TIME NEXT DAY DELIVERY COUNTDOWN
+  const [countdown, setCountdown] = useState("00:00:00");
+  useEffect(() => {
+    const updateCountdown = () => {
+      const now = new Date();
+      const tomorrow = new Date();
+      tomorrow.setHours(24, 0, 0, 0); // Target is midnight
+      const diff = tomorrow.getTime() - now.getTime();
+
+      const hours = String(Math.floor((diff / (1000 * 60 * 60)) % 24)).padStart(2, "0");
+      const minutes = String(Math.floor((diff / (1000 * 60)) % 60)).padStart(2, "0");
+      const seconds = String(Math.floor((diff / 1000) % 60)).padStart(2, "0");
+      
+      setCountdown(`${hours}:${minutes}:${seconds}`);
+    };
+
+    const timer = setInterval(updateCountdown, 1000);
+    updateCountdown();
+    return () => clearInterval(timer);
+  }, []);
 
   const [reviews, setReviews] = useState([
     {
@@ -88,10 +127,7 @@ export default function ProductClient({ post }: { post: any }) {
   ]);
 
   const [newReview, setNewReview] = useState({ name: "", comment: "", rating: 0 });
-
   const totalReviews = ratingBreakdown.reduce((a, b) => a + b.count, 0);
-
-  const thumbnails = [mainImage, mainImage, mainImage].filter(Boolean);
 
   return (
     <main className={`${lato.className} min-h-screen bg-gray-50`}>
@@ -111,7 +147,13 @@ export default function ProductClient({ post }: { post: any }) {
 
           {/* ── Left: Images ── */}
           <div className="flex flex-col gap-4">
-            <div className="rounded-2xl overflow-hidden bg-gray-100 aspect-4/5 w-full">
+            <div className="rounded-2xl overflow-hidden bg-gray-100 aspect-4/5 w-full shadow-inner relative">
+              {/* Dynamic Badge Component */}
+              {post.badge && (
+                <span className="absolute top-4 left-4 z-10 text-xs font-bold uppercase tracking-wider bg-black text-white px-3 py-1.5 rounded-lg shadow-md">
+                  {post.badge.replace("-", " ")}
+                </span>
+              )}
               {mainImage ? (
                 <img
                   src={mainImage}
@@ -120,24 +162,24 @@ export default function ProductClient({ post }: { post: any }) {
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-gray-300 text-sm">
-                  No image
+                  No image available
                 </div>
               )}
             </div>
 
-            {thumbnails.length > 0 && (
+            {imageGallery.length > 1 && (
               <div className="grid grid-cols-4 gap-3">
-                {thumbnails.map((img, i) => (
+                {imageGallery.map((img: string, i: number) => (
                   <button
                     key={i}
                     onClick={() => setMainImage(img)}
                     className={`rounded-xl overflow-hidden aspect-square border-2 transition-all duration-200 ${
                       mainImage === img
-                        ? "border-gray-900 scale-95"
+                        ? "border-gray-900 scale-95 shadow-sm"
                         : "border-transparent hover:border-gray-300"
                     }`}
                   >
-                    <img src={img!} alt={`View ${i + 1}`} className="w-full h-full object-cover" />
+                    <img src={img} alt={`View ${i + 1}`} className="w-full h-full object-cover" />
                   </button>
                 ))}
               </div>
@@ -150,21 +192,26 @@ export default function ProductClient({ post }: { post: any }) {
             {/* Category + Title */}
             <div>
               <span className="text-xs font-semibold tracking-widest text-gray-400 uppercase">
-                Woman Fashion
+                {post.category || "General Fashion"}
               </span>
               <h1 className="text-3xl font-bold text-gray-900 mt-1 leading-tight">
                 {post.title}
               </h1>
+              {post.sku && <p className="text-xs text-gray-400 mt-1">SKU: {post.sku}</p>}
             </div>
 
             {/* Price + Rating */}
             <div className="flex items-center justify-between">
               <div className="flex items-baseline gap-3">
-                <span className="text-2xl font-bold text-gray-900">৳ 4,499</span>
-                <span className="text-sm line-through text-gray-400">৳ 6,999</span>
-                <span className="text-xs font-semibold bg-red-100 text-red-600 px-2 py-0.5 rounded-full">
-                  50% OFF
-                </span>
+                <span className="text-2xl font-bold text-gray-900">৳ {price.toLocaleString()}</span>
+                {discountPercentage > 0 && (
+                  <>
+                    <span className="text-sm line-through text-gray-400">৳ {compareAtPrice.toLocaleString()}</span>
+                    <span className="text-xs font-semibold bg-red-100 text-red-600 px-2 py-0.5 rounded-full">
+                      {discountPercentage}% OFF
+                    </span>
+                  </>
+                )}
               </div>
               <div className="flex items-center gap-1.5">
                 <Stars count={4} />
@@ -172,19 +219,28 @@ export default function ProductClient({ post }: { post: any }) {
               </div>
             </div>
 
-            {/* Delivery badge */}
+            {/* Dynamic Inventory / Urgency Notification */}
+            {post.inventory !== undefined && post.inventory <= 5 && post.inventory > 0 ? (
+              <div className="text-xs font-bold text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-2">
+                Only {post.inventory} items left in stock!
+              </div>
+            ) : post.inventory === 0 ? (
+              <div className="text-xs font-bold text-gray-500 bg-gray-100 border border-gray-200 rounded-xl px-4 py-2">
+                Out of Stock
+              </div>
+            ) : null}
+
+            {/* Delivery badge with active live countdown */}
             <div className="flex items-center gap-2 text-sm text-gray-500 bg-white border border-gray-100 rounded-xl px-4 py-3">
               <Clock size={15} className="text-gray-400" />
-              Order in{" "}
-              <span className="font-semibold text-gray-800">02:30:25</span>
-              {" "}to get next day delivery
+              Order in <span className="font-mono font-semibold text-gray-800">{countdown}</span> to get next day delivery
             </div>
 
             {/* Perks */}
             <div className="flex gap-4 text-xs text-gray-500 border-t border-gray-100 pt-4">
               <div className="flex items-center gap-1.5">
                 <Truck size={14} className="text-gray-400" />
-                Fast delivery
+                {post.shippingNotice || "Fast delivery"}
               </div>
               <div className="flex items-center gap-1.5">
                 <RotateCcw size={14} className="text-gray-400" />
@@ -192,32 +248,40 @@ export default function ProductClient({ post }: { post: any }) {
               </div>
             </div>
 
-            {/* Size */}
-            <div>
-              <p className="text-sm font-semibold text-gray-700 mb-3">Select Size</p>
-              <div className="flex gap-2 flex-wrap">
-                {sizes.map((size) => (
-                  <button
-                    key={size}
-                    onClick={() => setSelectedSize(size)}
-                    className={`w-12 h-12 rounded-full text-sm font-medium transition-all duration-200 border ${
-                      selectedSize === size
-                        ? "bg-gray-900 text-white border-gray-900 scale-105 shadow-md"
-                        : "bg-white text-gray-700 border-gray-200 hover:border-gray-400"
-                    }`}
-                  >
-                    {size}
-                  </button>
-                ))}
+            {/* Size selection map from backend array */}
+            {availableSizes.length > 0 && (
+              <div>
+                <p className="text-sm font-semibold text-gray-700 mb-3">Select Size</p>
+                <div className="flex gap-2 flex-wrap">
+                  {availableSizes.map((size: string) => (
+                    <button
+                      key={size}
+                      onClick={() => setSelectedSize(size)}
+                      className={`w-12 h-12 rounded-full text-sm font-medium transition-all duration-200 border ${
+                        selectedSize === size
+                          ? "bg-gray-900 text-white border-gray-900 scale-105 shadow-md"
+                          : "bg-white text-gray-700 border-gray-200 hover:border-gray-400"
+                      }`}
+                    >
+                      {size}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* CTA Buttons */}
             <div className="flex gap-3">
-              <button className="flex-1 bg-gray-900 text-white rounded-2xl py-4 text-sm font-semibold hover:bg-gray-800 active:scale-[0.98] transition-all duration-200 shadow-lg shadow-gray-900/20">
+              <button 
+                disabled={post.inventory === 0}
+                className="flex-1 bg-gray-900 text-white rounded-2xl py-4 text-sm font-semibold hover:bg-gray-800 active:scale-[0.98] transition-all duration-200 shadow-lg shadow-gray-900/20 disabled:bg-gray-300 disabled:cursor-not-allowed disabled:shadow-none"
+              >
                 Add to Cart
               </button>
-              <button className="flex-1 border border-gray-900 text-gray-900 rounded-2xl py-4 text-sm font-semibold hover:bg-gray-900 hover:text-white active:scale-[0.98] transition-all duration-200">
+              <button 
+                disabled={post.inventory === 0}
+                className="flex-1 border border-gray-900 text-gray-900 rounded-2xl py-4 text-sm font-semibold hover:bg-gray-900 hover:text-white active:scale-[0.98] transition-all duration-200 disabled:border-gray-300 disabled:text-gray-300 disabled:cursor-not-allowed"
+              >
                 Buy Now
               </button>
               <button
@@ -247,7 +311,7 @@ export default function ProductClient({ post }: { post: any }) {
                 </svg>
               </button>
               {descOpen && (
-                <div className="px-5 pb-5 border-t border-gray-50 text-sm text-gray-500 leading-relaxed pt-4">
+                <div className="px-5 pb-5 border-t border-gray-50 text-sm text-gray-500 leading-relaxed pt-4 portable-text-wrapper">
                   {Array.isArray(post.body) ? (
                     <PortableText value={post.body} />
                   ) : (
@@ -263,7 +327,7 @@ export default function ProductClient({ post }: { post: any }) {
                 onClick={() => setShippingOpen(!shippingOpen)}
                 className="w-full flex items-center justify-between px-5 py-4 text-sm font-semibold text-gray-800 hover:bg-gray-50 transition-colors"
               >
-                Shipping
+                Shipping Details
                 <svg
                   className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${shippingOpen ? "rotate-180" : ""}`}
                   fill="none" stroke="currentColor" viewBox="0 0 24 24"
@@ -275,10 +339,10 @@ export default function ProductClient({ post }: { post: any }) {
                 <div className="px-5 pb-5 border-t border-gray-50">
                   <div className="grid grid-cols-2 gap-3 pt-4">
                     {[
-                      { label: "Discount", value: "50% Off" },
-                      { label: "Package", value: "Regular Package" },
-                      { label: "Delivery Time", value: "3–6 Working Days" },
-                      { label: "Estimated Arrival", value: "10–12 Oct 2024" },
+                      { label: "Deal status", value: discountPercentage > 0 ? `${discountPercentage}% Off` : "Standard Price" },
+                      { label: "Delivery Type", value: post.shippingNotice || "Regular Home Delivery" },
+                      { label: "Stock Availability", value: post.inventory > 0 ? "In Stock" : "Out of Stock" },
+                      { label: "Region", value: "Worldwide Delivery" },
                     ].map((item) => (
                       <div key={item.label} className="bg-gray-50 rounded-xl p-3">
                         <p className="text-xs text-gray-400 mb-0.5">{item.label}</p>
