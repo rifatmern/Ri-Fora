@@ -1,3 +1,5 @@
-import {postType} from './postType'
+import { postType } from './postType'       // Your original data (remains perfectly safe)
 
-export const schemaTypes = [postType]
+export const schemaTypes = [
+  postType,       
+]
