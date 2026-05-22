@@ -4,6 +4,7 @@ export const postType = defineType({
   name: 'post',
   title: 'Post',
   type: 'document',
+
   fields: [
     defineField({
       name: 'title',
@@ -11,12 +12,14 @@ export const postType = defineType({
       type: 'string',
       validation: (rule) => rule.required(),
     }),
+
     defineField({
       name: 'slug',
       type: 'slug',
       options: {source: 'title'},
       validation: (rule) => rule.required(),
     }),
+
     defineField({
       name: 'publishedAt',
       type: 'datetime',
@@ -24,7 +27,29 @@ export const postType = defineType({
       validation: (rule) => rule.required(),
     }),
 
-    // 1. THIS IS YOUR SINGLE IMAGE UPGRADE SECTION (Allows multiple uploads cleanly)
+    /* 🔥 CATEGORY FIELD */
+    defineField({
+      name: 'category',
+      title: 'Category',
+      type: 'string',
+
+      options: {
+        list: [
+          {title: 'Women', value: 'Women'},
+          {title: 'Kids', value: 'Kids'},
+          {title: 'Fragrance', value: 'Fragrance'},
+          {title: 'Footwear', value: 'Footwear'},
+          {title: 'Men', value: 'Men'},
+          {title: 'Accessories', value: 'Accessories'},
+        ],
+
+        layout: 'dropdown',
+      },
+
+      validation: (rule) => rule.required(),
+    }),
+
+    /* 🔥 MULTIPLE IMAGES */
     defineField({
       name: 'images',
       title: 'Product Images',
@@ -39,35 +64,41 @@ export const postType = defineType({
       of: [{type: 'block'}],
     }),
 
-    // --- NEW E-COMMERCE FIELDS ---
+    /* 🔥 PRICE */
     defineField({
       name: 'price',
       title: 'Price',
       type: 'number',
       validation: (rule) => rule.min(0),
     }),
+
     defineField({
       name: 'compareAtPrice',
       title: 'Compare at Price (MSRP/Sale)',
       type: 'number',
       validation: (rule) => rule.min(0),
     }),
+
     defineField({
       name: 'sku',
       title: 'SKU',
       type: 'string',
     }),
+
     defineField({
       name: 'inventory',
       title: 'Stock Quantity',
       type: 'number',
       validation: (rule) => rule.min(0),
     }),
+
     defineField({
       name: 'availableSizes',
       title: 'Available Sizes',
       type: 'array',
+
       of: [{type: 'string'}],
+
       options: {
         list: [
           {title: 'XS', value: 'xs'},
@@ -76,15 +107,16 @@ export const postType = defineType({
           {title: 'L', value: 'l'},
           {title: 'XL', value: 'xl'},
         ],
-        layout: 'tags', // Gives a clean visual tag interface in Sanity
+
+        layout: 'tags',
       },
     }),
 
-    // 2. KEEPS OLD DATA SAFE IN THE BACKGROUND WITHOUT CAUSING COMPILER ERRORS
+    /* 🔥 OLD IMAGE SAFE */
     defineField({
       name: 'image',
       type: 'image',
-      hidden: true, // Hides it from the UI so your panel stays completely clean
+      hidden: true,
     }),
   ],
 })
