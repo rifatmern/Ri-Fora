@@ -6,7 +6,6 @@ import Navbar from "../../components/Navbar";
 import BackTop from "../../components/BackTop";
 import Footer from "../../components/Footer";
 
-import Providers from "./providers"; // 👈 NEW
 
 const lato = Lato({
   subsets: ["latin"],
@@ -28,7 +27,6 @@ export default function RootLayout({
     <html lang="en" className={`${lato.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col font-sans">
 
-        <Providers>
 
           <Navbar />
 
@@ -37,7 +35,6 @@ export default function RootLayout({
           <BackTop />
           <Footer />
 
-        </Providers>
 
       </body>
     </html>
