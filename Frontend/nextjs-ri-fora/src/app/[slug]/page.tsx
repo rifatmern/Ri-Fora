@@ -6,11 +6,18 @@ export default async function PostPage({
 }: {
   params: { slug: string };
 }) {
-  const { slug } = await Promise.resolve(params);
   const post = await client.fetch(
     `*[_type == "post" && slug.current == $slug][0]`,
-    { slug },
+    { slug: params.slug }
   );
+
+  if (!post) {
+    return (
+      <div className="p-10 text-center text-gray-500">
+        Product not found 😢
+      </div>
+    );
+  }
 
   return <ProductClient post={post} />;
 }

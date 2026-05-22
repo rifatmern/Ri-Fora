@@ -1,12 +1,17 @@
 "use client";
+
 import React, { useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Search, User, Menu, X } from "lucide-react";
 import CartBadge from "./CartBadge";
 
 const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const pathname = usePathname();
+
+  const items = ["Shop", "Collections", "About"];
 
   return (
     <>
@@ -16,16 +21,27 @@ const Navbar = () => {
 
           {/* LEFT */}
           <div className="hidden md:flex items-center gap-3 text-sm font-medium text-gray-700">
-            {["Shop", "Collections", "About"].map((item) => (
-              <Link
-                key={item}
-                href={`/${item.toLowerCase()}`}
-                className="relative group"
-              >
-                {item}
-                <span className="absolute left-0 -bottom-1 w-0 h-px bg-black transition-all duration-300 group-hover:w-full"></span>
-              </Link>
-            ))}
+            {items.map((item) => {
+              const href = `/${item.toLowerCase()}`;
+              const isActive = pathname === href;
+
+              return (
+                <Link
+                  key={item}
+                  href={href}
+                  className="relative group"
+                >
+                  {item}
+
+                  {/* underline (UNCHANGED STYLE) */}
+                  <span
+                    className={`absolute left-0 -bottom-1 h-px bg-black transition-all duration-300 ${
+                      isActive ? "w-full" : "w-0 group-hover:w-full"
+                    }`}
+                  />
+                </Link>
+              );
+            })}
           </div>
 
           {/* LOGO */}
@@ -49,7 +65,7 @@ const Navbar = () => {
               <User size={20} strokeWidth={1.5} />
             </button>
 
-            {/* ✅ CART BADGE (NEW) */}
+            {/* CART */}
             <CartBadge />
 
             {/* MOBILE MENU */}
@@ -66,11 +82,12 @@ const Navbar = () => {
         {/* MOBILE MENU */}
         {menuOpen && (
           <div className="md:hidden bg-white border-t px-4 py-4 space-y-4 text-gray-700">
-            {["Shop", "New", "Collections", "About"].map((item) => (
+            {items.map((item) => (
               <Link
                 key={item}
                 href={`/${item.toLowerCase()}`}
                 className="block"
+                onClick={() => setMenuOpen(false)}
               >
                 {item}
               </Link>
@@ -89,6 +106,7 @@ const Navbar = () => {
                 <X size={20} />
               </button>
             </div>
+
             <input
               type="text"
               placeholder="Search RiFora..."
